@@ -1,0 +1,10 @@
+# Rust
+/target/
+
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+
