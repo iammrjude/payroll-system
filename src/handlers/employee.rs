@@ -1,15 +1,18 @@
+// src/handlers/employee.rs
+
 use crate::{
     auth::AuthOrg,
     errors::{AppError, AppResult},
     models::{
-        AddAdjustmentRequest, AdjustmentType, CreateEmployeeRequest, Employee,
-        PayrollAdjustment, SetBaseSalaryRequest,
+        AddAdjustmentRequest, AdjustmentType, CreateEmployeeRequest, Employee, PayrollAdjustment,
+        SetBaseSalaryRequest,
     },
     state::AppState,
 };
 use axum::{
-    extract::{Path, State},
     Json,
+    extract::{Path, State},
+    http::StatusCode,
 };
 use uuid::Uuid;
 
@@ -30,7 +33,7 @@ pub async fn create_employee(
     auth: AuthOrg,
     State(state): State<AppState>,
     Json(body): Json<CreateEmployeeRequest>,
-) -> AppResult<(axum::http::StatusCode, Json<Employee>)> {
+) -> AppResult<(StatusCode, Json<Employee>)> {
     let existing = sqlx::query!(
         "SELECT id FROM employees WHERE organization_id = $1 AND email = $2",
         auth.id,
@@ -66,7 +69,7 @@ pub async fn create_employee(
     .fetch_one(&state.db)
     .await?;
 
-    Ok((axum::http::StatusCode::CREATED, Json(employee)))
+    Ok((StatusCode::CREATED, Json(employee)))
 }
 
 /// List all employees for the authenticated organization
@@ -147,7 +150,9 @@ pub async fn set_base_salary(
     Json(body): Json<SetBaseSalaryRequest>,
 ) -> AppResult<Json<Employee>> {
     if body.base_salary < rust_decimal_macros::dec!(0) {
-        return Err(AppError::Validation("Base salary cannot be negative".to_string()));
+        return Err(AppError::Validation(
+            "Base salary cannot be negative".to_string(),
+        ));
     }
 
     let employee = sqlx::query_as!(
@@ -193,10 +198,15 @@ pub async fn deactivate_employee(
     .await?;
 
     if result.rows_affected() == 0 {
-        return Err(AppError::NotFound(format!("Employee {} not found", employee_id)));
+        return Err(AppError::NotFound(format!(
+            "Employee {} not found",
+            employee_id
+        )));
     }
 
-    Ok(Json(serde_json::json!({ "message": "Employee deactivated successfully" })))
+    Ok(Json(
+        serde_json::json!({ "message": "Employee deactivated successfully" }),
+    ))
 }
 
 // ─── Adjustments ──────────────────────────────────────────────────────────────
@@ -207,7 +217,7 @@ async fn add_adjustment(
     employee_id: Uuid,
     adjustment_type: AdjustmentType,
     body: AddAdjustmentRequest,
-) -> AppResult<(axum::http::StatusCode, Json<PayrollAdjustment>)> {
+) -> AppResult<(StatusCode, Json<PayrollAdjustment>)> {
     // Verify employee belongs to org
     let _ = sqlx::query!(
         "SELECT id FROM employees WHERE id = $1 AND organization_id = $2",
@@ -219,7 +229,9 @@ async fn add_adjustment(
     .ok_or_else(|| AppError::NotFound(format!("Employee {} not found", employee_id)))?;
 
     if body.amount <= rust_decimal_macros::dec!(0) {
-        return Err(AppError::Validation("Amount must be greater than zero".to_string()));
+        return Err(AppError::Validation(
+            "Amount must be greater than zero".to_string(),
+        ));
     }
 
     let adj = sqlx::query_as!(
@@ -241,7 +253,7 @@ async fn add_adjustment(
     .fetch_one(&state.db)
     .await?;
 
-    Ok((axum::http::StatusCode::CREATED, Json(adj)))
+    Ok((StatusCode::CREATED, Json(adj)))
 }
 
 /// Add overtime for an employee
@@ -262,7 +274,7 @@ pub async fn add_overtime(
     State(state): State<AppState>,
     Path(employee_id): Path<Uuid>,
     Json(body): Json<AddAdjustmentRequest>,
-) -> AppResult<(axum::http::StatusCode, Json<PayrollAdjustment>)> {
+) -> AppResult<(StatusCode, Json<PayrollAdjustment>)> {
     add_adjustment(auth, state, employee_id, AdjustmentType::Overtime, body).await
 }
 
@@ -284,7 +296,7 @@ pub async fn add_bonus(
     State(state): State<AppState>,
     Path(employee_id): Path<Uuid>,
     Json(body): Json<AddAdjustmentRequest>,
-) -> AppResult<(axum::http::StatusCode, Json<PayrollAdjustment>)> {
+) -> AppResult<(StatusCode, Json<PayrollAdjustment>)> {
     add_adjustment(auth, state, employee_id, AdjustmentType::Bonus, body).await
 }
 
@@ -306,7 +318,7 @@ pub async fn add_commission(
     State(state): State<AppState>,
     Path(employee_id): Path<Uuid>,
     Json(body): Json<AddAdjustmentRequest>,
-) -> AppResult<(axum::http::StatusCode, Json<PayrollAdjustment>)> {
+) -> AppResult<(StatusCode, Json<PayrollAdjustment>)> {
     add_adjustment(auth, state, employee_id, AdjustmentType::Commission, body).await
 }
 
@@ -328,8 +340,15 @@ pub async fn add_late_day_deduction(
     State(state): State<AppState>,
     Path(employee_id): Path<Uuid>,
     Json(body): Json<AddAdjustmentRequest>,
-) -> AppResult<(axum::http::StatusCode, Json<PayrollAdjustment>)> {
-    add_adjustment(auth, state, employee_id, AdjustmentType::LateDayDeduction, body).await
+) -> AppResult<(StatusCode, Json<PayrollAdjustment>)> {
+    add_adjustment(
+        auth,
+        state,
+        employee_id,
+        AdjustmentType::LateDayDeduction,
+        body,
+    )
+    .await
 }
 
 /// Add an unpaid leave deduction for an employee
@@ -350,8 +369,15 @@ pub async fn add_unpaid_leave_deduction(
     State(state): State<AppState>,
     Path(employee_id): Path<Uuid>,
     Json(body): Json<AddAdjustmentRequest>,
-) -> AppResult<(axum::http::StatusCode, Json<PayrollAdjustment>)> {
-    add_adjustment(auth, state, employee_id, AdjustmentType::UnpaidLeaveDeduction, body).await
+) -> AppResult<(StatusCode, Json<PayrollAdjustment>)> {
+    add_adjustment(
+        auth,
+        state,
+        employee_id,
+        AdjustmentType::UnpaidLeaveDeduction,
+        body,
+    )
+    .await
 }
 
 /// List all payroll adjustments for an employee

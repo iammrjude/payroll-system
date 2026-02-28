@@ -1,8 +1,8 @@
 use crate::{config::Config, errors::AppError, models::PayrollSlip};
 use lettre::{
-    message::{header::ContentType, MultiPart, SinglePart},
-    transport::smtp::authentication::Credentials,
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
+    message::{MultiPart, SinglePart, header::ContentType},
+    transport::smtp::authentication::Credentials,
 };
 use rust_decimal::Decimal;
 use std::sync::Arc;
@@ -24,11 +24,12 @@ impl EmailService {
             self.config.smtp_password.clone(),
         );
 
-        let transport = AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&self.config.smtp_host)
-            .map_err(|e| AppError::EmailError(e.to_string()))?
-            .credentials(creds)
-            .port(self.config.smtp_port)
-            .build();
+        let transport =
+            AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&self.config.smtp_host)
+                .map_err(|e| AppError::EmailError(e.to_string()))?
+                .credentials(creds)
+                .port(self.config.smtp_port)
+                .build();
 
         Ok(transport)
     }
@@ -41,10 +42,7 @@ impl EmailService {
         org_name: &str,
         slip: &PayrollSlip,
     ) -> Result<(), AppError> {
-        let subject = format!(
-            "Your Payslip for {} - {}",
-            slip.pay_period, org_name
-        );
+        let subject = format!("Your Payslip for {} - {}", slip.pay_period, org_name);
 
         let html_body = build_payslip_html(employee_name, org_name, slip);
         let text_body = build_payslip_text(employee_name, org_name, slip);

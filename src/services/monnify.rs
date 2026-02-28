@@ -1,10 +1,9 @@
 use crate::{config::Config, errors::AppError};
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 use reqwest::Client;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use tracing::{error, info};
 
 #[derive(Clone)]
 pub struct MonnifyService {
@@ -59,6 +58,7 @@ pub struct MonnifyTransferResponse {
     pub response_body: Option<MonnifyTransferBody>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct MonnifyTransferBody {
     #[serde(rename = "reference")]
@@ -159,7 +159,10 @@ impl MonnifyService {
         reference: &str,
     ) -> Result<InitPaymentBody, AppError> {
         let token = self.get_access_token().await?;
-        let url = format!("{}/api/v1/merchant/transactions/init-transaction", self.config.monnify_base_url);
+        let url = format!(
+            "{}/api/v1/merchant/transactions/init-transaction",
+            self.config.monnify_base_url
+        );
 
         let payload = InitPaymentRequest {
             amount: amount.try_into().unwrap_or(0.0),
@@ -210,7 +213,10 @@ impl MonnifyService {
         narration: &str,
     ) -> Result<MonnifyTransferBody, AppError> {
         let token = self.get_access_token().await?;
-        let url = format!("{}/api/v2/disbursements/single", self.config.monnify_base_url);
+        let url = format!(
+            "{}/api/v2/disbursements/single",
+            self.config.monnify_base_url
+        );
 
         let payload = SingleTransferRequest {
             amount: amount.try_into().unwrap_or(0.0),

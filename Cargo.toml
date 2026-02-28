@@ -3,9 +3,57 @@ name = "payroll-system"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "payroll-system"
+path = "src/main.rs"
+
 [dependencies]
-axum = "0.8.8"
-serde = { version = "1.0.228", features = ["derive"] }
+# Web framework
+axum = { version = "0.8.8", features = ["macros"] }
 tokio = { version = "1.49.0", features = ["full"] }
+tower = "0.5.3"
+tower-http = { version = "0.6.8", features = ["cors", "trace"] }
+
+# Serialization
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+
+# Database (SQLx with PostgreSQL)
+sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "rust_decimal"] }
+
+# IDs & Time
+uuid = { version = "1.21.0", features = ["v4", "serde"] }
+chrono = { version = "0.4.44", features = ["serde"] }
+rust_decimal = { version = "1.40.0", features = ["serde-with-str"] }
+rust_decimal_macros = "1.40.0"
+
+# HTTP Client (for Monnify API)
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+# Email
+lettre = { version = "0.11.19", default-features = false, features = ["smtp-transport", "tokio1", "tokio1-native-tls", "builder", "hostname"] }
+
+# Env & Config
+dotenvy = "0.15.7"
+
+# Error handling
+thiserror = "2.0.18"
+anyhow = "1.0.102"
+
+# Tracing / Logging
 tracing = "0.1.44"
-tracing-subscriber = "0.3.22"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+
+# Swagger / OpenAPI
+utoipa = { version = "5.4.0", features = ["axum_extras", "uuid", "chrono", "decimal"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+
+# Auth (JWT)
+jsonwebtoken = { version = "10.3.0", default-features = false, features = ["use_pem", "rust_crypto"] }
+bcrypt = "0.18.0"
+
+# Async utilities
+async-trait = "0.1.89"
+
+# Base64 (for Monnify auth header)
+base64 = "0.22.1"

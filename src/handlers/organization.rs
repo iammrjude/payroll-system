@@ -1,5 +1,7 @@
+// src/handlers/organization.rs
+
 use crate::{
-    auth::{generate_token, AuthOrg},
+    auth::{AuthOrg, generate_token},
     errors::{AppError, AppResult},
     models::{
         AuthResponse, CreateOrganizationRequest, FundWalletRequest, FundWalletResponse,
@@ -8,8 +10,8 @@ use crate::{
     services::monnify::MonnifyService,
     state::AppState,
 };
-use axum::{extract::State, Json};
-use bcrypt::{hash, verify, DEFAULT_COST};
+use axum::{Json, extract::State, http::StatusCode};
+use bcrypt::{DEFAULT_COST, hash, verify};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -27,7 +29,7 @@ use uuid::Uuid;
 pub async fn register_organization(
     State(state): State<AppState>,
     Json(body): Json<CreateOrganizationRequest>,
-) -> AppResult<(axum::http::StatusCode, Json<AuthResponse>)> {
+) -> AppResult<(StatusCode, Json<AuthResponse>)> {
     // Check for duplicate email
     let existing = sqlx::query!("SELECT id FROM organizations WHERE email = $1", body.email)
         .fetch_optional(&state.db)
@@ -63,7 +65,7 @@ pub async fn register_organization(
     )?;
 
     Ok((
-        axum::http::StatusCode::CREATED,
+        StatusCode::CREATED,
         Json(AuthResponse {
             token,
             organization: OrganizationPublic {
@@ -104,7 +106,9 @@ pub async fn login_organization(
         .map_err(|e| AppError::Internal(e.to_string()))?;
 
     if !valid {
-        return Err(AppError::Unauthorized("Invalid email or password".to_string()));
+        return Err(AppError::Unauthorized(
+            "Invalid email or password".to_string(),
+        ));
     }
 
     let token = generate_token(
@@ -179,7 +183,12 @@ pub async fn fund_wallet(
     let reference = format!("FUND-{}-{}", auth.id, Uuid::new_v4());
 
     let payment = monnify
-        .initiate_wallet_funding(body.amount, &body.customer_name, &body.customer_email, &reference)
+        .initiate_wallet_funding(
+            body.amount,
+            &body.customer_name,
+            &body.customer_email,
+            &reference,
+        )
         .await?;
 
     Ok(Json(FundWalletResponse {

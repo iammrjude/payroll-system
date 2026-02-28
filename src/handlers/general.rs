@@ -1,15 +1,16 @@
 use crate::state::AppState;
 use axum::{
+    Json,
     extract::State,
     http::StatusCode,
     response::{Html, IntoResponse},
-    Json,
 };
 use serde_json::json;
 
 /// Root handler — returns an HTML landing page with project info and links
 pub async fn root_handler() -> impl IntoResponse {
-    Html(r#"<!DOCTYPE html>
+    Html(
+        r#"<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -124,7 +125,8 @@ pub async fn root_handler() -> impl IntoResponse {
   </footer>
 </div>
 </body>
-</html>"#)
+</html>"#,
+    )
 }
 
 /// Health check endpoint

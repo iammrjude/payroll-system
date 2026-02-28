@@ -1,3 +1,5 @@
+// src/openapi.rs
+
 use crate::models::{
     AddAdjustmentRequest, AdjustmentType, AuthResponse, CreateEmployeeRequest,
     CreateOrganizationRequest, Employee, FundWalletRequest, FundWalletResponse, LoginRequest,
@@ -5,8 +7,8 @@ use crate::models::{
     SetBaseSalaryRequest, SetTaxConfigRequest, TaxConfig,
 };
 use utoipa::{
-    openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
     Modify, OpenApi,
+    openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
 };
 
 struct BearerAuth;

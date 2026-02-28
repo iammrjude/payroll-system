@@ -1,8 +1,10 @@
-use axum::{routing::get, Router};
+// src/main.rs
+
+use axum::{Router, routing::get};
 use sqlx::postgres::PgPoolOptions;
 use std::time::Duration;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
-use tracing::{info, Level};
+use tracing::{Level, info};
 use tracing_subscriber::EnvFilter;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -75,7 +77,5 @@ async fn main() {
         .await
         .expect("Failed to bind to address");
 
-    axum::serve(listener, app)
-        .await
-        .expect("Server failed");
+    axum::serve(listener, app).await.expect("Server failed");
 }
